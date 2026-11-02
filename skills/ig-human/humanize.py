@@ -24,6 +24,10 @@ Usage
   pbpaste | python3 humanize.py - --report
   python3 humanize.py draft.txt --json
   python3 humanize.py draft.txt -o clean.txt
+  python3 humanize.py draft.txt --lang pt     # force Portuguese (default: auto)
+
+Portuguese text uses slop.pt.json for the lexical pass and the structural
+tells; the invisible and typographic passes are the same in both languages.
 """
 
 import argparse
@@ -35,14 +39,43 @@ import unicodedata
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 LEX = os.path.join(HERE, "slop.json")
+LEX_PT = os.path.join(HERE, "slop.pt.json")
 
 URL_RE = re.compile(r"https?://\S+|www\.\S+|\S+@\S+\.\S+")
 SENT_RE = re.compile(r"[^.!?\n]+[.!?]*")
 
 
-def load_lexicon(path=LEX):
+def load_lexicon(path=LEX, lang="en", pt_path=LEX_PT):
     with open(path, encoding="utf-8") as fh:
-        return json.load(fh)
+        lex = json.load(fh)
+    if lang == "pt" and os.path.exists(pt_path):
+        with open(pt_path, encoding="utf-8") as fh:
+            pt = json.load(fh)
+        for key in ("words", "phrases", "structures"):
+            lex[key] = pt[key]
+    return lex
+
+
+_PT_MARKERS = {
+    "não", "nao", "você", "voce", "vc", "que", "de", "da", "do", "das", "dos",
+    "é", "um", "uma", "eu", "isso", "esse", "essa", "como", "mais", "seu",
+    "sua", "porque", "tá", "pra", "pro", "com", "por", "para", "os", "as",
+    "no", "na", "nos", "em", "mas", "meu", "minha", "te", "já", "só", "tem",
+    "foi", "vai", "são", "aqui", "hoje", "gente", "o", "ou", "se", "também",
+}
+_EN_MARKERS = {
+    "the", "you", "your", "and", "is", "to", "that", "of", "it", "this",
+    "i", "my", "for", "was", "are", "with", "what", "how", "if", "on", "in",
+    "be", "have", "will", "just",
+}
+
+
+def detect_lang(text):
+    low = text.lower()
+    toks = re.findall(r"[^\W\d_]+(?:'[a-z]+)?", low)
+    pt = sum(t in _PT_MARKERS for t in toks) + 2 * len(re.findall(r"[ãõçâêôáéíóúà]", low))
+    en = sum(t in _EN_MARKERS for t in toks)
+    return "pt" if pt > en else "en"
 
 
 def _cp(spec):
@@ -149,6 +182,8 @@ def pass_lexical(text, lex):
     text = re.sub(r"(?m)^[ \t](?=\S)", "", text)       # one space left by a deletion.
                                                       # Deeper indents are deliberate.
     text = re.sub(r"\s+([,.;:!?])", r"\1", text)
+    # A deleted clause can strand its conjunction: "more tips and!" / "dicas e!".
+    text = re.sub(r"\s+(?:and|or|e|ou)([.!?])", r"\1", text)
     text = re.sub(r",\s*([,.;:!?])", r"\1", text)      # an em dash became a comma,
                                                       # then the clause after it went
     text = text.replace("...", "\x00ELL\x00")          # protect real ellipses
@@ -159,7 +194,7 @@ def pass_lexical(text, lex):
     text = re.sub(r"\n{3,}", "\n\n", text)
     # An em dash that became a comma, followed by a sentence connective, leaves
     # a splice ("is important, also, it's proof"). Promote it to a full stop.
-    text = re.sub(r",\s*(also|so|still|basically|in the end)\s*,\s*",
+    text = re.sub(r",\s*(also|so|still|basically|in the end|também|então|ainda|resumindo|assim)\s*,\s*",
                   lambda m: ". " + m.group(1)[0].upper() + m.group(1)[1:] + ", ", text)
     return text, hits
 
@@ -196,10 +231,10 @@ def restore_capitals(original, text):
     a deliberately lower-case voice is a style, not an artefact, and shouting
     over it would be exactly the kind of thing this script exists to stop.
     """
-    starts = re.findall(r"(?:^|[.!?]\s+|\n)\s*([A-Za-z])", original)
+    starts = re.findall(r"(?:^|[.!?]\s+|\n)\s*([^\W\d_])", original)
     if not starts or sum(1 for c in starts if c.isupper()) * 2 < len(starts):
         return text
-    return re.sub(r"(?:^|(?<=[.!?] )|(?<=[.!?]\n)|(?<=\n))\s*([a-z])",
+    return re.sub(r"(?:^|(?<=[.!?] )|(?<=[.!?]\n)|(?<=\n))\s*([a-záéíóúâêôãõçà])",
                   lambda m: m.group(0)[:-1] + m.group(1).upper(), text)
 
 
@@ -260,10 +295,12 @@ def main():
     ap.add_argument("--report", action="store_true", help="print what changed, to stderr")
     ap.add_argument("--json", action="store_true", help="emit {text, report} as JSON")
     ap.add_argument("--lexicon", default=LEX, help="path to slop.json")
+    ap.add_argument("--lang", choices=["auto", "en", "pt"], default="auto")
     args = ap.parse_args()
 
     raw = sys.stdin.read() if args.input == "-" else open(args.input, encoding="utf-8").read()
-    lex = load_lexicon(args.lexicon)
+    lang = detect_lang(raw) if args.lang == "auto" else args.lang
+    lex = load_lexicon(args.lexicon, lang)
     clean, report = humanize(raw, lex)
 
     if args.json:

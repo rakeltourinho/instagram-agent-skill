@@ -19,6 +19,11 @@ Usage
   python3 caption.py caption.txt --keywords "proposal software,client contract"
   pbpaste | python3 caption.py -
   python3 caption.py caption.txt --json
+
+Languages:  English and Brazilian Portuguese at the same time, no flag needed.
+The calls to action ("comenta EU QUERO", "me chama na DM", "manda pro sócio no
+zap", "link na bio"), the generic hashtags (#explorar, #reelsbrasil) and the
+concrete markers (R$ 18 mil, WhatsApp) are recognised in both.
 """
 
 import argparse
@@ -35,12 +40,16 @@ HASHTAG_LIMIT = 5        # Instagram's cap per post or reel since 18 Dec 2025,
                          # rather than many generic ones, can improve both your
                          # content's performance and people's experience".
 
-HASHTAG_RE = re.compile(r"(?:^|\s)(#[A-Za-z0-9_]+)")
-MENTION_RE = re.compile(r"(?:^|\s)(@[A-Za-z0-9_.]+)")
-LINK_RE = re.compile(r"https?://\S+|\bwww\.\S+|\b[a-z0-9-]+\.(?:com|co|io|net|org|ai|app)/\S*",
+# \w, not [A-Za-z]: "#motivação" is one tag, not "#motiva".
+HASHTAG_RE = re.compile(r"(?:^|\s)(#\w+)")
+MENTION_RE = re.compile(r"(?:^|\s)(@[\w.]+)")
+LINK_RE = re.compile(r"https?://\S+|\bwww\.\S+"
+                     r"|\b[a-z0-9-]+\.(?:com|co|io|net|org|ai|app|com\.br|br|me)/\S*",
                      re.IGNORECASE)
 EMOJI_RE = re.compile(r"[\U0001F300-\U0001FAFF☀-➿←-⇿️]")
-CONCRETE_RE = re.compile(r"\$\s?\d|\b\d[\d,.]*\b|(?<!^)\b[A-Z][a-z]{2,}\b", re.MULTILINE)
+CONCRETE_RE = re.compile(r"R?\$\s?\d|\b\d[\d,.]*\b"
+                         r"|(?<!^)\b[A-ZÁÉÍÓÚÂÊÔÃÕÇ][a-záéíóúâêôãõçà]{2,}(?:[A-Z][a-z]+)*\b",
+                         re.MULTILINE)
 
 ASKS = [
     (re.compile(r"(?i)\bcomment (?:the word |\")?[A-Z0-9]{2,}\b"), "comment a keyword"),
@@ -51,11 +60,32 @@ ASKS = [
     (re.compile(r"(?i)\blink in (?:my )?bio\b"), "link in bio"),
     (re.compile(r"(?i)\b(?:swipe|tap) (?:through|left|right|for|to)\b"), "swipe or tap"),
     (re.compile(r"(?i)\btell me\b|\bwhat would you\b|\bwhich one\b"), "answer a question"),
+    # Português do Brasil. The keyword has to be written in capitals
+    # ("comenta EU QUERO"), which is how it is done here and how the
+    # auto-reply tools match it.
+    (re.compile(r"(?i:\b(?:comenta|comente|escreve|escreva|digita|digite|manda)\b)\s+"
+                r"(?:(?i:a palavra|aqui|aí|ai)\s+)?[\"“']?[A-ZÁÉÍÓÚÂÊÔÃÕÇ0-9]{2,}\b"), "comment a keyword"),
+    (re.compile(r"(?i)\b(?:me chama|chama|me manda (?:uma )?(?:mensagem|dm|direct))\s+(?:na|no)\s+"
+                r"(?:dm|direct|inbox|privado|pv|whats|whatsapp|zap)\b"), "DM me"),
+    (re.compile(r"(?i)\b(?:salva|salve|guarda|guarde)\s+(?:esse|este|o|pra|para)\b"), "save this"),
+    (re.compile(r"(?i)\b(?:compartilha|compartilhe|encaminha|envia|manda)\s+(?:esse|este|isso|pr[ao]|para)\b"
+                r"|\bmanda no (?:grupo|zap|whats)\b"), "share this"),
+    (re.compile(r"(?i)\b(?:me segue|me siga|segue (?:o perfil|a página|pra mais|para mais)|siga (?:o perfil|para mais))\b"), "follow"),
+    (re.compile(r"(?i)\blink (?:na|da) (?:minha )?bio\b|\blink no (?:meu )?perfil\b"), "link in bio"),
+    (re.compile(r"(?i)\b(?:arrasta|arraste|desliza|deslize|passa|passe)\s+(?:pro|para o|pra) (?:lado|próximo)\b"
+                r"|\b(?:clica|clique|toca|toque) (?:no|na|aqui)\b"), "swipe or tap"),
+    (re.compile(r"(?i)\bme (?:conta|diz|fala)\b|\bqual (?:você|vc|vocês) \b|\bvocê (?:prefere|faria)\b"
+                r"|\bconta aqui\b"), "answer a question"),
 ]
 
 FILLER_TAGS = {"#viral", "#fyp", "#explore", "#explorepage", "#foryou", "#foryoupage",
                "#trending", "#instagood", "#love", "#follow", "#like4like", "#reels",
-               "#reelsinstagram", "#viralreels", "#instadaily"}
+               "#reelsinstagram", "#viralreels", "#instadaily",
+               # Português
+               "#explorar", "#viralizar", "#viralizou", "#reelsbrasil", "#reelsviral",
+               "#brasil", "#instabrasil", "#paravocê", "#paravoce", "#foryoubrasil",
+               "#amor", "#segue", "#sigam", "#curtir", "#curta", "#tbt", "#gratidão",
+               "#gratidao", "#sucesso", "#motivação", "#motivacao", "#dicas"}
 
 
 def visible_window(text, cut):

@@ -1,3 +1,98 @@
+# Instagram agent skill, em português do Brasil
+
+Fork em português de [Jakeschincariol/instagram-agent-skill](https://github.com/Jakeschincariol/instagram-agent-skill).
+Mesmas treze skills, mesma estrutura, mesmas regras de honestidade. A diferença
+é que agora elas escrevem, pontuam e revisam em **português do Brasil**, com o que
+funciona no Instagram daqui, e continuam funcionando em inglês.
+
+## O que mudou
+
+**As cinco ferramentas Python agora entendem português.** No original, todas as
+listas (palavras de tensão, cumprimentos, números por extenso, "you") eram em
+inglês, e a expressão regular de palavras cortava "Ninguém" em "Ningu" e "não"
+em "n". Resultado: um gancho bom em português tirava nota de gancho ruim, e "Nesse
+vídeo eu vou te mostrar..." passava como OK. Agora cada script detecta o idioma
+sozinho (`--lang pt` ou `--lang en` força um) e usa tabelas próprias do português
+falado no Brasil:
+
+| ferramenta | o que ganhou em português |
+| --- | --- |
+| `hookscore.py` | cumprimentos ("oi gente", "fala galera", "bom dia meus amores"), preâmbulos ("nesse vídeo", "hoje eu vou"), dinheiro (R$ 18 mil, pix, conto), gíria de internet (flopar, cancelado, shadowban), primeira pessoa pelo verbo ("perdi", "postei") |
+| `hooks.pt.json` | 32 fórmulas: as 26 originais reescritas como se fala aqui + **POV, Quem É Sabe, Testei Pra Você, O Dia Em Que, Achadinho, Expectativa x Realidade** |
+| `slop.pt.json` | 218 vícios de IA em português ("no mundo de hoje", "vale ressaltar", "alavancar", "jornada", "virada de chave", "além disso") e do Instagram brasileiro ("me segue pra mais dicas", "marca alguém que precisa ver isso"), com troca que respeita gênero e número, e 19 estruturas ("Não é só X, é Y", lista de ✅, "Bora?") |
+| `detect.py` | marcas do português falado no lugar das contrações do inglês (tá, pra, né, a gente), números por extenso e meses em minúscula contam como concretos |
+| `caption.py` | "comenta CONTRATO", "me chama na DM", "manda pro sócio no zap", "link na bio", #explorar e #reelsbrasil como hashtag genérica, `.com.br` |
+| `beats.py` | 150 palavras por minuto por padrão (palavra em português tem mais sílaba), palavras vazias do português pra checar o loop |
+| `swipe.py` | entende "412 mil", "1,2 mi" e "48k"; classifica gancho em português contra `hooks.pt.json` |
+
+**Os 13 `SKILL.md` foram reescritos em português** com o contexto brasileiro: o
+envio pro WhatsApp como o pedido mais forte, a cultura do "comenta a palavra" com
+automação de DM, link da bio pro WhatsApp, storytime e humor de identificação,
+áudio em alta e o limite da conta comercial, o calendário comercial daqui (Dia das
+Mães, Dia dos Namorados em 12 de junho, Dia do Cliente, 13º, Black Friday), os
+quatro fusos do Brasil, #publi e o guia do CONAR, as regras de publicidade dos
+conselhos de classe (CFM, CFP, OAB...) e a LGPD nos prints de cliente. Quem
+escrever em inglês continua sendo atendido em inglês.
+
+**O inglês não mudou.** As notas em inglês são idênticas às do original, com duas
+exceções que são correção de bug: a checagem de abertura fraca comparava pedaço de
+palavra, então "**So**cial media..." era lido como a muleta "so" e "**Look**ing
+back..." como "look". Agora compara palavra inteira.
+
+## O que foi medido
+
+`tests/pt-br/check.py` roda as ferramentas num corpus de 15 ganchos bons, 10
+ruins, uma legenda humana e uma com cara de IA, todos em português:
+
+| | original | este fork |
+| --- | --- | --- |
+| média dos ganchos bons | 40,7 (12 de 15 WEAK) | 67,6 |
+| média dos ganchos ruins | 31,3 | 19,8 |
+| AUC bons x ruins | 0,80 | 0,98 |
+| "Nesse vídeo eu vou te mostrar..." | 52,4 OK | 20,4 WEAK |
+| legenda humana (`detect.py`) | 51,4 REVIEW | 81,7 PASS |
+| legenda com cara de IA | 30,3 FLAGGED | 25,3 FLAGGED |
+
+**Leia isto antes de acreditar na tabela.** Esse corpus foi escrito pra testar, não
+transcrito de reels brasileiros reais, e foi escrito por quem escreveu as
+tabelas. Ele prova que as ferramentas agora *leem* português (pegam o
+cumprimento, o preâmbulo, o número, o vício) e serve pra pegar regressão quando
+você mexer no léxico. Ele **não** prova que a nota prevê desempenho no Brasil. O
+original mediu isso em inglês com 74 ganchos reais e achou AUC 0,83 pra separar
+bom de ruim e 0,56 pra separar acerto de erro do mesmo criador; o equivalente em
+português ainda não foi feito. O próximo passo honesto é trocar
+`tests/pt-br/hooks_*.txt` por ganchos transcritos de reels brasileiros de verdade,
+com as views, e rodar de novo.
+
+## Instalar
+
+```bash
+git clone https://github.com/rakeltourinho/instagram-agent-skill.git
+cp -r instagram-agent-skill/skills/ig-* ~/.claude/skills/
+```
+
+Ou como plugin:
+
+```
+/plugin marketplace add rakeltourinho/instagram-agent-skill
+/plugin install instagram-agent
+```
+
+Depois gasta dez minutos no `templates/voice.md` (agora em português; o original
+está em `voice.en.md`). Copia pra `~/.claude/instagram/voice.md` e preenche, ou
+manda três reels seus pro Claude e fala "escreve meu voice.md a partir desses".
+
+Testar as ferramentas:
+
+```bash
+python3 skills/ig-reel/hookscore.py --hook "Ninguém te conta que seus primeiros 30 reels vão flopar."
+python3 tests/pt-br/check.py
+```
+
+Original em inglês abaixo, sem alteração.
+
+---
+
 # The Instagram agent skill
 
 Thirteen Claude skills that run an Instagram account. Free, MIT, no signup, no

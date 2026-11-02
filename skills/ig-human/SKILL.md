@@ -1,111 +1,125 @@
 ---
 name: ig-human
 description: >-
-  Strip the machine fingerprint out of any draft - em dashes, AI slop words,
-  invisible watermark characters - and score it against a five-check detection
-  panel before it goes out. Use whenever text needs to sound human, when the
-  user says humanize, "does this sound like AI", "remove the em dashes",
-  "de-slop this", "this sounds like ChatGPT", or before any caption, script,
-  comment, reply or DM is shown to the user.
+  Tira a marca de máquina de qualquer rascunho - travessão, vocabulário de IA
+  ("no mundo de hoje", "vale ressaltar", "jornada", "virada de chave"),
+  caracteres invisíveis - e pontua o texto num painel de cinco checagens antes
+  de sair. Funciona em português e em inglês. Use sempre que o texto precisar
+  soar humano, quando pedirem "humaniza", "tá com cara de IA?", "tira os
+  travessões", "parece ChatGPT", "de-slop this", ou antes de mostrar qualquer
+  legenda, roteiro, comentário, resposta ou DM.
 ---
 
 # ig-human
 
-Two tools live in this folder and they both actually run. Use them. Do not
-eyeball this.
+Duas ferramentas moram nesta pasta e as duas rodam de verdade. Usa elas. Não
+faz isso no olho.
 
 ```bash
-python3 humanize.py draft.txt --report        # clean it, show what changed
-python3 detect.py draft.txt                    # score it, five checks
-python3 detect.py before.txt after.txt         # prove the delta
+python3 humanize.py rascunho.txt --report       # limpa e mostra o que mudou
+python3 detect.py rascunho.txt                  # pontua, cinco checagens
+python3 detect.py antes.txt depois.txt          # prova a diferença
 ```
 
-Both read `slop.json`: 154 stock words and phrases with plain-English
-replacements, 18 invisible character classes, 11 typographic substitutions and
-16 structural tells. The last block of each list is Instagram-specific, the
-vocabulary that only shows up in captions and voiceovers. It is meant to be
-edited. If the user has a word they always use that the lexicon strips, take it
-out of the file.
+As duas detectam o idioma do texto. Em português usam `slop.pt.json`: mais de
+200 palavras e expressões que a IA repete em português, com troca que mantém
+gênero e número ("jornada" vira "trajetória", não "caminho", pra frase não
+quebrar), e 19 estruturas típicas. Em inglês usam `slop.json`. Os caracteres
+invisíveis e a tipografia são os mesmos nos dois. `--lang pt` ou `--lang en`
+força um idioma.
 
-## Why this matters more on Instagram than it looks
+O léxico é pra ser editado. Se a pessoa sempre usa uma palavra que o léxico
+corta (uma nutricionista fala "essencial" o tempo todo, e com razão), tira a
+palavra do arquivo.
 
-Captions are short and scripts get said out loud. A written-sounding line in a
-600-character caption is a larger share of the text than the same line in an
-essay, and a voiceover that nobody could say naturally is obvious in the first
-take. The tell here is not a detector flagging the post. The tell is a person
-scrolling past something that reads like a brand, or a creator stumbling over
-their own script.
+## Por que isso pesa mais no Instagram do que parece
 
-## What gets fixed automatically
+Legenda é curta e roteiro é falado. Uma frase com cara de escrita numa legenda
+de 600 caracteres é uma fatia maior do texto do que a mesma frase num artigo, e
+uma locução que ninguém falaria naturalmente aparece na primeira tomada. O
+sinal aqui não é um detector marcando o post. É alguém rolando o feed e
+passando reto por algo que parece texto de marca, ou a criadora tropeçando no
+próprio roteiro.
 
-**1. Invisible characters.** Zero-width spaces and joiners, word joiners, soft
-hyphens, byte-order marks, Unicode tag characters, invisible separators,
-non-breaking and narrow spaces. A keyboard does not produce these. They survive
-copy-paste, they are invisible in every editor, and they are the most
-mechanical thing in generated text. `humanize.py` deletes every one, including
-any remaining Unicode format character it does not have a name for.
+Em português tem um agravante: a IA escreve português de redação do ENEM. "Além
+disso", "dessa forma", "em suma", "é fundamental". Ninguém fala assim no story.
 
-**2. Typography.** Em dash to comma, en dash to hyphen, curly quotes to
-straight, ellipsis to three dots, bullet character to hyphen. The em dash pass
-is the one that matters: it collapses the dash to a comma and then cleans up
-the double punctuation and orphaned periods that leaves behind.
+## O que é corrigido automaticamente
 
-**3. The slop lexicon.** delve, leverage, robust, seamless, crucial, testament
-to, "in today's fast-paced world", plus the Instagram block: "stop scrolling",
-"in today's video", "follow for more", "tag someone who needs this", "the
-algorithm loves", "run don't walk". Each swapped for a plain word or deleted,
-with capitalisation preserved and URLs left untouched.
+**1. Caracteres invisíveis.** Espaço de largura zero, word joiner, hífen
+suave, BOM, caracteres de tag Unicode, espaço não separável. Teclado de celular
+não produz isso. Sobrevive ao copiar e colar, é invisível em qualquer editor, e
+é a coisa mais mecânica num texto gerado. O `humanize.py` apaga todos.
 
-## What does NOT get fixed automatically
+**2. Tipografia.** Travessão vira vírgula, meia-risca vira hífen, aspas curvas
+viram retas, reticências viram três pontos, marcador vira hífen. O travessão é
+o que mais importa: ele vira vírgula e o script ainda limpa a pontuação dupla
+que sobra.
 
-Structural tells get **flagged, not rewritten**, because changing the shape of
-a sentence needs judgement:
+**3. O léxico.** Em português: "no mundo de hoje", "vale ressaltar que",
+"alavancar", "potencializar", "jornada", "robusto", "crucial", "virada de
+chave", "além disso", "dessa forma", "em suma", e o bloco do Instagram
+brasileiro: "para de rolar o feed", "nesse vídeo eu vou te mostrar", "me segue
+pra mais dicas", "marca alguém que precisa ver isso", "o algoritmo ama", "esse
+é o seu sinal". Cada um vira uma palavra simples ou é apagado, mantendo a
+maiúscula e sem mexer em link.
 
-- "It's not just X, it's Y" and "not only X but also Y"
-- Rule-of-three triads
-- Rhetorical one-word question lines: "The result?"
-- The video preamble: "in this video I'm going to show you"
-- Emoji bullet lists
-- Three or more shouted words in a row
-- Hashtag walls
-- Reflex bait: "follow for more", "tag someone who", "double tap if"
+## O que NÃO é corrigido automaticamente
 
-That list is your job. Rewrite each flagged line by hand, keeping the meaning,
-then re-run `detect.py`. This is the part that moves the score from REVIEW to
-PASS, and it is the part a script cannot do.
+As estruturas são **apontadas, não reescritas**, porque mudar o formato de uma
+frase exige julgamento:
 
-## The five checks
+- "Não é só X, é Y" e "não só X, mas também Y"
+- "Não é sobre X. É sobre Y."
+- Lista de três ("clareza, segurança e profissionalismo")
+- Pergunta retórica sozinha na linha: "O resultado?"
+- O preâmbulo de vídeo: "nesse vídeo eu vou te mostrar"
+- Lista com ✅ no lugar de marcador
+- Três ou mais palavras em CAIXA ALTA seguidas
+- Muro de hashtag
+- Fecho de coach: "Bora?", "Vamos juntos?"
+- "Você sabia que...?" na abertura
+- Isca genérica: "me segue", "marca alguém", "concorda?"
 
-`detect.py` scores five signals 0-100, higher is more human:
+Essa lista é trabalho seu. Reescreve cada linha apontada à mão, mantendo o
+sentido, e roda o `detect.py` de novo. É essa parte que leva a nota de REVIEW
+pra PASS, e é a parte que script nenhum faz.
 
-| check | what it measures | machine looks like |
+## As cinco checagens
+
+O `detect.py` dá nota de 0 a 100 pra cinco sinais, quanto maior, mais humano:
+
+| checagem | o que mede | cara de máquina |
 | --- | --- | --- |
-| BURSTINESS | sentence-length variation | every sentence the same length |
-| SPECIFICITY | numbers, names, concrete markers per 100 words | abstract nouns, no figures |
-| SLOP DENSITY | lexicon hits per 100 words | stock vocabulary |
-| FINGERPRINT | invisible chars, em dashes, curly quotes per 1k chars | typographically perfect |
-| VOICE | contractions, person, structural tells | no contractions, staged reveals |
+| BURSTINESS | variação no tamanho das frases | toda frase do mesmo tamanho |
+| SPECIFICITY | números, nomes, meses, marcas por 100 palavras | substantivo abstrato, nenhum número |
+| SLOP DENSITY | ocorrências do léxico por 100 palavras | vocabulário de banco |
+| FINGERPRINT | invisíveis, travessões, aspas curvas por 1.000 caracteres | tipografia perfeita demais |
+| VOICE | marcas de fala, pessoa, estruturas | nenhuma marca de fala, revelação encenada |
 
-The verdict weights the mean at 60% and the **weakest single check** at 40%,
-because one signal is enough. PASS needs an overall of 70+ with no check
-below 55.
+Em português, VOICE conta as marcas do português falado no lugar das
+contrações do inglês: "tá", "tô", "pra", "né", "cê", "aí", "a gente". E conta
+a primeira pessoa pelo verbo também ("perdi", "postei", "testei"), porque em
+português ninguém fala "eu" o tempo todo.
 
-## Say this honestly
+O veredito pesa a média em 60% e a **pior checagem sozinha** em 40%, porque um
+sinal basta. PASS exige 70+ no geral e nenhuma checagem abaixo de 55.
 
-These are five local heuristics modelled on the signals public detectors key
-on. They run entirely on the user's machine and nothing is uploaded. They are
-**not** GPTZero, Originality, Copyleaks, Winston or Turnitin, they do not call
-those APIs, and they cannot promise those verdicts. Fixing what they measure
-does tend to move those numbers, because they are measuring the same underlying
-things. That is the claim. Do not make a bigger one on the user's behalf, and
-do not tell a user their text is undetectable.
+## Fala isso com honestidade
 
-## Order of operations
+São cinco heurísticas locais, modeladas nos sinais que os detectores públicos
+usam. Rodam inteiras na máquina da pessoa e nada é enviado. **Não são** GPTZero,
+Originality, Copyleaks, Winston ou Turnitin, não chamam essas APIs e não
+garantem o veredito deles. Corrigir o que elas medem costuma mexer nesses
+números também, porque medem as mesmas coisas por baixo. Essa é a promessa.
+Não faz uma maior no nome da pessoa, e nunca diz que um texto é "indetectável".
 
-1. `humanize.py draft.txt -o clean.txt --report`
-2. Read the structural flags. Rewrite those lines yourself.
-3. `detect.py draft.txt clean.txt` to show the before and after.
-4. If the verdict is not PASS, fix the weakest check named in the output and go
-   again. Two rounds is normal. Five means the draft was written by formula,
-   and the fix is a different draft, not more passes.
-5. Show the user the cleaned text and the score. Never the score alone.
+## Ordem das operações
+
+1. `humanize.py rascunho.txt -o limpo.txt --report`
+2. Lê as estruturas apontadas. Reescreve essas linhas você mesmo.
+3. `detect.py rascunho.txt limpo.txt` pra mostrar o antes e o depois.
+4. Se o veredito não é PASS, corrige a pior checagem que a saída nomeou e roda
+   de novo. Duas rodadas é normal. Cinco quer dizer que o rascunho foi escrito
+   na fórmula, e a solução é outro rascunho, não mais rodadas.
+5. Mostra pra pessoa o texto limpo e a nota. Nunca só a nota.

@@ -1,13 +1,25 @@
 {
   "name": "instagram-agent",
-  "description": "Thirteen Claude skills that run an Instagram account: Reels off 26 hook formulas with a scored hook and a timed beat sheet, a research skill that finds what is working in your niche and ranks it by outlier multiple, captions linted against the feed truncation, carousels, stories, profile score, weekly plan, comments, replies, DMs, repurposing, audits, and a humanizer that strips the AI fingerprint before anything ships.",
-  "version": "1.0.0",
+  "description": "Treze skills do Claude que tocam uma conta de Instagram, em português do Brasil e em inglês: Reels com 32 fórmulas de gancho (26 clássicas + 6 formatos brasileiros), gancho pontuado e decupagem cronometrada, pesquisa do que está viralizando no nicho por múltiplo, legenda revisada contra o corte do feed, carrossel, stories, nota de perfil, plano da semana com o calendário comercial brasileiro, comentários, respostas, DMs, reaproveitamento, auditoria e um humanizador que tira a cara de IA antes de qualquer coisa sair. Fork em português de Jakeschincariol/instagram-agent-skill.",
+  "version": "1.1.0",
   "author": {
     "name": "Jake Schincariol",
     "url": "https://opusjake.ai"
   },
-  "homepage": "https://github.com/Jakeschincariol/instagram-agent-skill",
-  "repository": "https://github.com/Jakeschincariol/instagram-agent-skill",
+  "homepage": "https://github.com/rakeltourinho/instagram-agent-skill",
+  "repository": "https://github.com/rakeltourinho/instagram-agent-skill",
   "license": "MIT",
-  "keywords": ["instagram", "reels", "content", "writing", "humanizer", "social", "marketing"]
+  "keywords": [
+    "instagram",
+    "reels",
+    "content",
+    "writing",
+    "humanizer",
+    "social",
+    "marketing",
+    "portugues",
+    "pt-br",
+    "brasil",
+    "reels-brasil"
+  ]
 }

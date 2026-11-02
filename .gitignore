@@ -3,3 +3,6 @@ __pycache__/
 *.pyc
 .venv/
 *.tmp
+
+# estado local do oh-my-claudecode
+.omc/

@@ -23,6 +23,10 @@ Usage
   python3 swipe.py captured.tsv
   python3 swipe.py captured.tsv --out ~/.claude/instagram/swipe.md
   python3 swipe.py captured.tsv --json
+
+Brazilian accounts are fine: write views and followers the way Instagram shows
+them ("412 mil", "1,2 mi", "48k") and hooks in Portuguese. Portuguese hooks are
+named against ig-reel/hooks.pt.json, English ones against hooks.json.
 """
 
 import argparse
@@ -34,13 +38,43 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 HOOKS = os.path.join(HERE, "..", "ig-reel", "hooks.json")
-WORD_RE = re.compile(r"[A-Za-z0-9$%'’-]+")
+HOOKS_PT = os.path.join(HERE, "..", "ig-reel", "hooks.pt.json")
+WORD_RE = re.compile(r"[\w$%'’º-]+")
 
 try:                                              # optional: score the hooks too
     sys.path.insert(0, os.path.join(HERE, "..", "ig-reel"))
     from hookscore import run as score_hook       # noqa: E402
+    from hookscore import detect_lang             # noqa: E402
 except Exception:                                 # ig-viral copied on its own
     score_hook = None
+
+    def detect_lang(text):
+        low = text.lower()
+        pt = len(re.findall(r"[ãõçâêôáéíóú]|\b(?:não|você|que|de|pra|um|uma|eu|isso)\b", low))
+        en = len(re.findall(r"\b(?:the|you|your|and|is|to|that|of|this|i)\b", low))
+        return "pt" if pt > en else "en"
+
+
+def parse_count(raw):
+    """'412,000' / '412.000' / '412 mil' / '1,2 mi' / '1.2M' / '48k' -> int."""
+    s = (raw or "").strip().lower().replace(" ", "")
+    if not s:
+        return None
+    m = re.match(r"^([\d.,]+)(mil|k|mi|m|milh(?:ão|ao|ões|oes)|bi|b)?$", s)
+    if not m:
+        digits = re.sub(r"[^\d]", "", s)
+        return int(digits) if digits else None
+    num, unit = m.group(1), m.group(2)
+    if unit:
+        num = num.replace(",", ".")                 # "1,2 mi" is 1.2 million
+        if num.count(".") > 1:
+            num = num.replace(".", "", num.count(".") - 1)
+        mult = {"mil": 1e3, "k": 1e3, "bi": 1e9, "b": 1e9}.get(unit, 1e6)
+        try:
+            return int(round(float(num) * mult))
+        except ValueError:
+            return None
+    return int(re.sub(r"[^\d]", "", num) or 0)
 
 
 def load_formulas(path):
@@ -55,6 +89,8 @@ def load_formulas(path):
 
 
 def classify(hook, formulas):
+    if isinstance(formulas, dict):                 # {"en": [...], "pt": [...]}
+        formulas = formulas.get(detect_lang(hook)) or formulas.get("en")
     if not formulas:
         return None, "unclassified"
     for fid, name, pattern in formulas:
@@ -79,13 +115,9 @@ def read_rows(path):
         if len(cells) < len(cols):
             cells += [""] * (len(cols) - len(cells))
         r = dict(zip(cols, [c.strip() for c in cells]))
-        try:
-            r["views"] = int(re.sub(r"[^\d]", "", r.get("views", "")) or 0)
-        except ValueError:
-            continue
+        r["views"] = parse_count(r.get("views", "")) or 0
         for k in ("followers", "median"):
-            digits = re.sub(r"[^\d]", "", r.get(k, "") or "")
-            r[k] = int(digits) if digits else None
+            r[k] = parse_count(r.get(k, ""))
         if r["views"] and r.get("hook"):
             rows.append(r)
     return rows
@@ -184,7 +216,9 @@ def main():
         print("no usable rows. Need a tab-separated file with at least views and hook.",
               file=sys.stderr)
         sys.exit(2)
-    formulas = load_formulas(args.hooks)
+    formulas = {"en": load_formulas(args.hooks), "pt": load_formulas(HOOKS_PT)}
+    if not formulas["en"] and not formulas["pt"]:
+        formulas = None
     a = analyse(rows, formulas)
     if not formulas:
         print("note: hooks.json not found, formulas not named. Pass --hooks.", file=sys.stderr)

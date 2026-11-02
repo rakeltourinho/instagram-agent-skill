@@ -19,6 +19,12 @@ Usage
   python3 beats.py script.txt --wpm 185 --target 45
   pbpaste | python3 beats.py -
   python3 beats.py script.txt --json
+  python3 beats.py roteiro.txt --lang pt      # force Portuguese (default: auto)
+
+Portuguese words carry more syllables than English ones, so the same speaker
+says fewer of them per minute. With no --wpm, Portuguese scripts are timed at
+150 words a minute instead of 165. That is an estimate: time yourself reading
+one script out loud and pass your own number.
 """
 
 import argparse
@@ -26,16 +32,41 @@ import json
 import re
 import sys
 
-WORD_RE = re.compile(r"[A-Za-z0-9$%'’-]+")
+WORD_RE = re.compile(r"[\w$%'’º-]+")
 SENT_RE = re.compile(r"[^.!?]+[.!?]*")
-CONCRETE_RE = re.compile(r"\$\s?\d|\b\d[\d,.]*\b|(?<!^)\b[A-Z][a-z]{2,}\b", re.MULTILINE)
+CONCRETE_RE = re.compile(
+    r"R?\$\s?\d|\b\d[\d,.]*\b"
+    r"|(?<!^)\b[A-ZÁÉÍÓÚÂÊÔÃÕÇ][a-záéíóúâêôãõçà]{2,}(?:[A-Z][a-z]+)*\b"
+    r"|\b(?:dois|duas|três|quatro|cinco|seis|sete|oito|nove|dez|vinte|trinta|cinquenta|"
+    r"cem|mil|milhão|milhões|reais)\b", re.MULTILINE)
+WPM_DEFAULT = {"en": 165, "pt": 150}
 STOPWORDS = {
     "the", "a", "an", "and", "or", "but", "if", "of", "to", "in", "on", "for",
     "with", "that", "this", "it", "is", "are", "was", "were", "be", "been",
     "you", "your", "i", "my", "me", "we", "our", "they", "them", "he", "she",
     "so", "just", "not", "no", "do", "did", "does", "have", "has", "had",
     "will", "can", "at", "as", "by", "from", "out", "up", "off", "one", "all",
+    # Português
+    "o", "os", "as", "um", "uma", "uns", "umas", "e", "ou", "mas", "se", "de",
+    "da", "do", "das", "dos", "em", "na", "no", "nas", "nos", "pra", "pro",
+    "para", "por", "com", "que", "isso", "esse", "essa", "este", "esta", "é",
+    "foi", "ser", "ter", "tem", "eu", "me", "meu", "minha", "você", "vc",
+    "seu", "sua", "te", "ele", "ela", "a gente", "nós", "não", "só", "já",
+    "tá", "tô", "aí", "aqui", "lá", "mais", "muito", "todo", "toda", "ao",
 }
+_PT_MARKERS = {"não", "você", "que", "de", "da", "do", "é", "um", "uma", "eu",
+               "isso", "esse", "pra", "com", "por", "para", "os", "no", "na",
+               "em", "mas", "meu", "minha", "tá", "o", "se", "ou", "hoje"}
+_EN_MARKERS = {"the", "you", "your", "and", "is", "to", "that", "of", "it",
+               "this", "i", "my", "for", "was", "are", "with", "what", "if"}
+
+
+def detect_lang(text):
+    low = text.lower()
+    toks = re.findall(r"[^\W\d_]+", low)
+    pt = sum(t in _PT_MARKERS for t in toks) + 2 * len(re.findall(r"[ãõçâêôáéíóúà]", low))
+    en = sum(t in _EN_MARKERS for t in toks)
+    return "pt" if pt > en else "en"
 
 HOOK_WINDOW = 3.0        # seconds. Past this, the thumb has already decided.
 MAX_BEAT = 4.0           # seconds on one idea with no change on screen.
@@ -43,8 +74,8 @@ ABSTRACT_RUN = 3         # beats in a row with nothing checkable in them.
 
 
 def words(text):
-    # "$18,000" is one word when it is spoken, so it is one word here too.
-    return WORD_RE.findall(re.sub(r"(?<=\d),(?=\d)", "", text))
+    # "$18,000" and "18.000" are one word when spoken, so one word here too.
+    return WORD_RE.findall(re.sub(r"(?<=\d)[,.](?=\d{3}\b)", "", text))
 
 
 def pretty(token):
@@ -194,13 +225,17 @@ def render(a, out=sys.stdout):
 def main():
     ap = argparse.ArgumentParser(description="Time a Reel script into a beat sheet.")
     ap.add_argument("input", nargs="?", default="-", help="script file, or - for stdin")
-    ap.add_argument("--wpm", type=float, default=165, help="speaking rate (default 165)")
+    ap.add_argument("--wpm", type=float, default=None,
+                    help="speaking rate (default 165 for English, 150 for Portuguese)")
+    ap.add_argument("--lang", choices=["auto", "en", "pt"], default="auto")
     ap.add_argument("--target", type=float, help="target length in seconds")
     ap.add_argument("--json", action="store_true")
     args = ap.parse_args()
 
     raw = sys.stdin.read() if args.input == "-" else open(args.input, encoding="utf-8").read()
-    a = analyse(raw, wpm=args.wpm, target=args.target)
+    lang = detect_lang(raw) if args.lang == "auto" else args.lang
+    wpm = args.wpm or WPM_DEFAULT[lang]
+    a = analyse(raw, wpm=wpm, target=args.target)
     if not a:
         print("empty script", file=sys.stderr)
         sys.exit(2)

@@ -1,88 +1,93 @@
 ---
 name: ig-repurpose
 description: >-
-  Turn one long asset - a YouTube video, podcast, livestream, newsletter, blog
-  post or client call - into a week of reels and carousels. Use when the user
-  says "repurpose this", "turn this into reels", "I have a video/podcast/
-  transcript", "cut this up", or pastes something long and wants it on
-  Instagram.
+  Transforma um conteúdo longo - vídeo do YouTube, podcast, live, newsletter,
+  post de blog, aula ou ligação com cliente - numa semana de reels e
+  carrosséis. Funciona em português e em inglês. Use quando pedirem
+  "reaproveita isso", "transforma em reels", "tenho um vídeo/podcast/
+  transcrição", "corta isso", "repurpose this", ou quando colarem algo longo e
+  quiserem no Instagram.
 ---
 
 # ig-repurpose
 
-One good long asset contains four to six posts. Most people extract one and
-throw the rest away.
+Um bom conteúdo longo tem de quatro a seis posts dentro. A maioria das pessoas
+tira um e joga o resto fora.
 
-## Input
+## Entrada
 
-A transcript, an article, a newsletter, a script, a call summary, a livestream.
-If the user gives a URL and this session has a transcript tool, use it;
-otherwise ask them to paste. Read the whole thing before extracting anything.
+Uma transcrição, um artigo, uma newsletter, um roteiro, um resumo de ligação, uma
+live. Se a pessoa mandar um link e esta sessão tiver ferramenta de transcrição,
+usa; senão, pede pra colar. Lê tudo antes de extrair qualquer coisa.
 
-If the source is a video the user owns, ask for the file too. A Reel built on
-their own footage beats one built on their own words read again.
+Se a fonte é um vídeo da própria pessoa, pede o arquivo também. Reels feito com a
+gravação dela ganha de um feito com as palavras dela lidas de novo.
 
-## Extract, do not summarise
+Live e podcast em português costumam ter muito "né", "tipo", "então" e frase que
+recomeça. Na hora de extrair, limpa a muleta mas mantém o jeito de falar: a
+frase tem que continuar soando como ela.
 
-A summary of a video is not a Reel. Nobody wants the summary. Go through the
-asset and pull out the things that stand alone:
+## Extrai, não resume
 
-| pull | what it is |
+Resumo de vídeo não é Reels. Ninguém quer o resumo. Passa pelo conteúdo e tira
+as coisas que se sustentam sozinhas:
+
+| o que tirar | o que é |
 | --- | --- |
-| **Claims** | every sentence that would start an argument |
-| **Numbers** | every figure, cost, duration, percentage |
-| **Stories** | every moment with a person, a scene and a cost |
-| **Mechanisms** | every "the way this actually works is..." |
-| **Mistakes** | every admission of something that went wrong |
-| **Lines** | every sentence already quotable as-is |
+| **Afirmações** | toda frase que começaria uma discussão |
+| **Números** | todo valor, custo, duração, porcentagem |
+| **Histórias** | todo momento com uma pessoa, uma cena e um custo |
+| **Mecanismos** | todo "o jeito que isso funciona de verdade é..." |
+| **Erros** | toda admissão de algo que deu errado |
+| **Frases** | toda frase que já pode ser citada do jeito que está |
 
-List what you found, with counts, before writing anything. If the asset yields
-fewer than four items, it is thin, and four posts squeezed out of it will be
-thin too. Say that.
+Lista o que achou, com contagem, antes de escrever qualquer coisa. Se o conteúdo
+rende menos de quatro itens, ele é raso, e quatro posts espremidos dele também
+vão ser. Diz isso.
 
-## Then pick the format per extract
+## Depois escolhe o formato de cada extração
 
-Not everything is a Reel.
+Nem tudo é Reels.
 
-- **Claim, mistake, story** to a Reel. They need a voice and a face.
-- **Mechanism, numbered list** to a carousel. They need to be re-read.
-- **A quotable line** to a story frame, not a post.
+- **Afirmação, erro, história** viram Reels. Precisam de voz e de rosto.
+- **Mecanismo, lista numerada** viram carrossel. Precisam ser relidos.
+- **Uma frase citável** vira frame de story, ou carrossel de texto, não post.
 
-## Then build the week
+## Depois monta a semana
 
-Each extract becomes one post and each post stands completely on its own. The
-viewer has not seen the source and never will. Never write "as I said in my
-latest video". The post is the thing.
+Cada extração vira um post e cada post se sustenta sozinho. Quem assiste não viu
+a fonte e nunca vai ver. Nunca escreve "como eu falei no meu último vídeo". O post
+é a coisa.
 
-Assign a hook formula from `ig-reel/hooks.json` to each and vary them. Five
-posts from one source with the same hook shape reads as a content mill, because
-it is one.
+Dá uma fórmula de gancho do `ig-reel/hooks.pt.json` pra cada um e varia. Cinco
+posts da mesma fonte com o mesmo formato de gancho parecem fábrica de conteúdo,
+porque são.
 
-If the source is the user's own video, **use the actual footage**. The clip
-where they said the thing, with the real reaction in it, beats a re-record
-every time. Cut on the sentence, not on the breath.
+Se a fonte é vídeo da própria pessoa, **usa a gravação de verdade**. O trecho em
+que ela falou a coisa, com a reação real, ganha de uma regravação sempre. Corta
+na frase, não na respiração.
 
-Order across the week so the strongest claim goes first, the story lands
-midweek, and the mechanism goes last, when the people who liked the earlier
-ones are watching for it.
+Ordena a semana pra afirmação mais forte ir primeiro, a história cair no meio da
+semana e o mecanismo ir por último, quando quem gostou dos primeiros está
+esperando por ele.
 
-## Output
+## Saída
 
 ```
-SOURCE: "Why we killed discovery calls" (42 min podcast, 8,900 words)
+FONTE: "Por que a gente acabou com a reunião de briefing" (podcast de 42 min, 8.900 palavras)
 
-FOUND  5 claims, 9 numbers, 3 stories, 4 mechanisms, 2 mistakes, 7 quotable lines
+ACHEI  5 afirmações, 9 números, 3 histórias, 4 mecanismos, 2 erros, 7 frases citáveis
 
-WEEK
-TUE  REEL      #2  Negative Command  Stop running discovery calls
-                                     use the 14:20 clip, he laughs at the end
-WED  CAROUSEL  Job B caption         The 4-question form that replaced the call
-FRI  REEL      #21 Mid-Sentence      "...and he asked for a refund nine days later"
-SUN  REEL      #5  Time Collapse     Six hours a week back, one deleted link
+SEMANA
+TER  REELS      #2  Ordem Negativa       Para de fazer reunião de briefing
+                                         usa o trecho de 14:20, ele ri no fim
+QUA  CARROSSEL  Trabalho B               O formulário de 4 perguntas que substituiu a reunião
+SEX  REELS      #21 Meio da Frase        "...e nove dias depois ele pediu reembolso"
+DOM  REELS      #5  Tempo Encurtado      Seis horas por semana de volta, um link apagado
 
-Say "write Tuesday" and I will draft it.
+Fala "escreve a terça" que eu rascunho.
 ```
 
-Then draft on request, one at a time, each through `/ig-reel` and `/ig-human`.
-Do not dump four finished scripts at once. They will all sound the same and the
-user will shoot none of them.
+Depois rascunha quando pedirem, um por vez, cada um pelo `/ig-reel` e pelo
+`/ig-human`. Não despeja quatro roteiros prontos de uma vez. Vão soar todos
+iguais e a pessoa não vai gravar nenhum.
